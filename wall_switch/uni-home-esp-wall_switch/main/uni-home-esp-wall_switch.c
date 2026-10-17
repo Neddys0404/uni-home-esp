@@ -171,21 +171,20 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
  */
 void wifi_init(void) {
     esp_wifi_set_mode(WIFI_MODE_STA);
-    esp_wifi_set_config(WIFI_IF_STA, &{ .sta = { .ssid = WIFI_SSID, .password = WIFI_PASS } });
+    esp_wifi_set_config(WIFI_IF_STA, &(wifi_config_t){ .sta = { .ssid = WIFI_SSID, .password = WIFI_PASS } });
     ESP_ERROR_CHECK(esp_wifi_start());
 }
 
 void app_main(void) {
     // 1. Initialize NVS
     esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEWTON_FOUND) {
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NOT_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
 
     // 2. Get MAC Address and prepare MQTT topics
-    esp_efuse_mac_get_default(&current_shift_state, NULL); // Dummy usage to ensure header is there
     uint8_t mac[6];
     esp_efuse_mac_get_default(mac);
     snprintf(mac_str, sizeof(mac_str), "%02X%02X%02X%02X%02X%02X", 
@@ -216,7 +215,7 @@ void app_main(void) {
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(esp_netif_init());
     wifi_event_group = xEventGroupCreate();
-    ESP_ERROR_CHECK(esp_netif_create_default_wifi_sta());
+    esp_netif_create_default_wifi_sta();
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL, NULL));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL, NULL));
     wifi_init();
@@ -229,15 +228,15 @@ void app_main(void) {
 
     esp_mqtt_client_config_t mqtt_cfg = {
         .broker.address.uri = MQTT_BROKER,
-        .will = {
+        .session.last_will = {
             .topic = status_topic,
-            .data = lwt_msg,
+            .msg = lwt_msg,
             .qos = 1,
         },
     };
 
     mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
-    esp_mqtt_client_register_event(mqtt_client, MQTT_EVENT_ANY_ID, mqtt_event_handler, NULL);
+    esp_mqtt_client_register_event(mqtt_client, MQTT_EVENT_ANY, mqtt_event_handler, NULL);
     esp_mqtt_client_start(mqtt_client);
 
     // 7. Start Heartbeat Task
