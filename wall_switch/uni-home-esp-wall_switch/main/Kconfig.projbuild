@@ -1,0 +1,15 @@
+menu "Uni-Home ESP Wall Switch Configuration"
+
+    config WIFI_SSID
+        string "WiFi SSID"
+        default "******"
+        help
+            WiFi network SSID to connect to.
+
+    config WIFI_PASS
+        string "WiFi Password"
+        default "******"
+        help
+            WiFi network password.
+
+endmenu
