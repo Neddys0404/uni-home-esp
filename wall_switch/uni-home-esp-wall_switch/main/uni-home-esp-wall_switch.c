@@ -148,7 +148,7 @@ void heartbeat_task(void *pvParameters) {
             snprintf(msg, sizeof(msg), "online, %s", bin_str);
             esp_mqtt_client_publish(mqtt_client, status_topic, msg, 0, 1, 0);
         }
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 
