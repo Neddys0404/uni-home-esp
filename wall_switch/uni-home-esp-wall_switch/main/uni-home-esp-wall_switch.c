@@ -17,7 +17,9 @@
 // Configuration - Change these to your actual credentials
 #define WIFI_SSID      CONFIG_WIFI_SSID
 #define WIFI_PASS      CONFIG_WIFI_PASS
-#define MQTT_BROKER    "mqtt://192.168.0.252" // Replace with your broker IP
+#define MQTT_USER      CONFIG_MQTT_USER
+#define MQTT_PASS      CONFIG_MQTT_PASS
+#define MQTT_BROKER    "mqtt://192.168.0.52" // Replace with your broker IP
 
 // GPIO Definitions for 74HC595
 #define GPIO_SER       8
@@ -146,7 +148,7 @@ void heartbeat_task(void *pvParameters) {
             snprintf(msg, sizeof(msg), "online, %s", bin_str);
             esp_mqtt_client_publish(mqtt_client, status_topic, msg, 0, 1, 0);
         }
-        vTaskDelay(pdMS_TO_TICKS(5000));
+        vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
 
@@ -158,7 +160,9 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        ESP_LOGI(TAG, "Disconnected from Wi-Fi. Retrying...");
+        wifi_event_sta_disconnected_t *event = (wifi_event_sta_disconnected_t *)event_data;
+        uint8_t reason = (event != NULL) ? event->reason : 0;
+        ESP_LOGI(TAG, "Disconnected from Wi-Fi, Reason: %d. Retrying...", reason);
         esp_wifi_connect();
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
@@ -174,13 +178,20 @@ void wifi_init(void) {
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
 
     wifi_config_t sta_cfg = {0};
     strncpy((char *)sta_cfg.sta.ssid, WIFI_SSID, sizeof(sta_cfg.sta.ssid) - 1);
     strncpy((char *)sta_cfg.sta.password, WIFI_PASS, sizeof(sta_cfg.sta.password) - 1);
+    sta_cfg.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
+
+    ESP_LOGI(TAG, "SSID: %s", sta_cfg.sta.ssid);
+    ESP_LOGI(TAG, "Password: %s", sta_cfg.sta.password);
 
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_cfg));
     ESP_ERROR_CHECK(esp_wifi_start());
+
+    ESP_ERROR_CHECK(esp_wifi_set_max_tx_power(34));
 }
 
 void app_main(void) {
@@ -236,6 +247,8 @@ void app_main(void) {
 
     esp_mqtt_client_config_t mqtt_cfg = {
         .broker.address.uri = MQTT_BROKER,
+        .credentials.username = MQTT_USER,
+        .credentials.authentication.password = MQTT_PASS, 
         .session.last_will = {
             .topic = status_topic,
             .msg = lwt_msg,

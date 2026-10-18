@@ -12,4 +12,15 @@ menu "Uni-Home ESP Wall Switch Configuration"
         help
             WiFi network password.
 
+    config MQTT_USER
+        string "MQTT Username"
+        default "******"
+        help
+            MQTT Username.
+
+    config MQTT_PASS
+        string "MQTT Password"
+        default "******"
+        help 
+            MQTT Password
 endmenu
