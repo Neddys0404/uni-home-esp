@@ -170,8 +170,16 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
  * @brief Initializes Wi-Fi station mode
  */
 void wifi_init(void) {
-    esp_wifi_set_mode(WIFI_MODE_STA);
-    esp_wifi_set_config(WIFI_IF_STA, &(wifi_config_t){ .sta = { .ssid = WIFI_SSID, .password = WIFI_PASS } });
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+
+    wifi_config_t sta_cfg = {0};
+    strncpy((char *)sta_cfg.sta.ssid, WIFI_SSID, sizeof(sta_cfg.sta.ssid) - 1);
+    strncpy((char *)sta_cfg.sta.password, WIFI_PASS, sizeof(sta_cfg.sta.password) - 1);
+
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_cfg));
     ESP_ERROR_CHECK(esp_wifi_start());
 }
 
