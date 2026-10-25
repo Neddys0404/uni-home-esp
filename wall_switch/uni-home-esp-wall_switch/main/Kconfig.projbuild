@@ -23,4 +23,12 @@ menu "Uni-Home ESP Wall Switch Configuration"
         default "******"
         help 
             MQTT Password
+
+    config SWITCHES_NUM
+        int "Number of Switches"
+        default 4
+        range 1 4
+        help
+            Choose the number of switches this device is intended to be controlling.
+
 endmenu
