@@ -24,6 +24,12 @@ menu "Uni-Home ESP Wall Switch Configuration"
         help 
             MQTT Password
 
+    config MQTT_BASE_TOPIC
+        string "Base Topic for MQTT"
+        default "smarthome"
+        help
+            Base Topic for MQTT Command / Heartbeat Status
+
     config SWITCHES_NUM
         int "Number of Switches"
         default 4

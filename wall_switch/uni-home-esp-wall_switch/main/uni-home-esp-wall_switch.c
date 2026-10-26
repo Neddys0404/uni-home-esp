@@ -26,6 +26,7 @@
 #define WIFI_PASS       CONFIG_WIFI_PASS
 #define MQTT_USER       CONFIG_MQTT_USER
 #define MQTT_PASS       CONFIG_MQTT_PASS
+#define MQTT_BASE_TOPIC CONFIG_MQTT_BASE_TOPIC
 #define MQTT_BROKER     "mqtt://192.168.0.52"
 
 // 74HC595 GPIO definitions
@@ -91,7 +92,7 @@ static void uint8_to_binary_string(uint8_t val, char *buf)
  * @brief Convert an MQTT binary payload to a byte.
  *
  * Returns false if the payload length is incorrect
- * or contains characters other than '0' and '1'.
+ * or contains characters other than '0' and '1'. 
  *
  * MQTT payloads are not guaranteed to be null-terminated.
  */
@@ -529,14 +530,16 @@ void app_main(void)
     snprintf(
         cmd_topic,
         sizeof(cmd_topic),
-        "/indoor/switches/%s",
+        "%s/indoor/switches/%s",
+        MQTT_BASE_TOPIC,
         mac_str
     );
 
     snprintf(
         status_topic,
         sizeof(status_topic),
-        "/indoor/switches/%s/status",
+        "%s/indoor/switches/%s/status",
+        MQTT_BASE_TOPIC,
         mac_str
     );
 
